@@ -126,6 +126,80 @@ def branching_sat_solve(clause_set, partial_assignment):
     
     return Sat_Solver(assignment) #returns final assignements or false if unsatisfiable
 
+def unit_propagate(clause_set):
+    variables = set() #set is an ordered non repeating list of elements
+    for clause in clause_set: #loops through each clause
+        for literal in clause: #loops through each item in clause
+            variables.add(abs(literal)) #adds it to the set variables (abs means it ignores negation)
+
+    variables = list(variables)  #converts it into a list
+    n = len(variables)  #finds and stores the number of variables
+
+    assignment = {} #dictionary used to store assignments for each variable
+
+    for x in range(n):
+        assignment[variables[x]] = None #initally assigns all variables None
+
+    
+    change_made=True #if no changes are made then no more unit propogation can be performed 
+    while (change_made==True):
+        change_made=False #sets it as false so we know if any changes have been made
+        for clause in clause_set:
+            if(len(clause)==1): #for unit clauses
+                var=abs(clause[0]) #gets the variable number and ignores negation 
+                
+                #case1: return contradiction 
+                if(assignment[variables[var]]!=None): #checks whether unit clause already assigned value
+                    if(var<0 and assignment[variables[var]] ==True): #if literal is negative and value true --> contradiction
+                        return False, assignment #returning assignment so that formatting later works
+                    elif(assignment[variables[var]]==False): #if literal is false, clause false --> contradiction
+                        return False, assignment #returning assignment so that formatting later works
+
+                
+                if(var <0): #if literal is negative, then for the clause to be true the var must be false
+                    assignment[variables[var]] = False
+                else: #if literal is not negative then it must be true to satisfy the clause
+                    assignment[variables[var]] = True
+                clause_set.remove(clause) #removed satisfied clause from clause set
+                change_made=True # change = unit clause removed
+           
+            clause_found = False
+
+            for literal in clause:
+                var = abs(literal) #gets variable number and ignores negation
+                value = assignment.get(var) #gets true/false
+                if (value is None): #if value hasn't been assigned just continue 
+                    continue
+                if (literal < 0):  # if literal is negative, invert the value
+                    value = not value
+                if (value==True):  #if at least one literal is True, clause is satisfied and can be removed
+                    clause_found = True
+                    break #no need to go though other literals in clause
+                elif(value==False): #if a literal's value is false, it can be removed from the clause
+                    clause.remove(literal) 
+                    change_made=True # change = false literal removed
+            if( clause_found==True): #if clause is satisfied, it can be removed
+                clause_set.remove(clause)
+                change_made=True #change = satisfied clause removed
+        
+        
+        if(len(clause_set==0)): # case2: no clauses left, return dictionary of variables and assignments
+            return True, assignment # returning true so that formatting works
+        
+    #case3: returns clauses that can't be worked upon any further and assignments
+    return True, assignment
+
+set=[[1], [-1,2], [-2,3]]
+unit_propagate(set)
+           
+           
+           
+            
+
+                    
+
+
+
 
 
 
